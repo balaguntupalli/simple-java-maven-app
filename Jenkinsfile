@@ -1,19 +1,6 @@
 pipeline {
-    agent any
-     triggers {
-        pollSCM "* * * * *"
-     }
-    environment {
-        GITHUB = credentials('gitHubCredentials')
-
-    }
 
     stages {
-        stage('Checkout') {
-            steps{
-                checkout scm
-            }
-        }
         stage('Build') {
             steps {
                 sh 'mvn -B -DskipTests clean package'
@@ -39,7 +26,7 @@ pipeline {
                             steps {
                                 echo '=== Building simple-java-maven-app Docker Image ==='
                                 script {
-                                    app = docker.build("rpidugu/simple-java-maven-app")
+                                    app = docker.build("861614002005.dkr.ecr.us-east-1.amazonaws.com/nginx")
                                 }
                             }
                 }
@@ -52,7 +39,7 @@ pipeline {
                                 script {
                                     GIT_COMMIT_HASH = sh (script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
                                     SHORT_COMMIT = "${GIT_COMMIT_HASH[0..7]}"
-                                    docker.withRegistry('https://registry.hub.docker.com', 'dockerHubCredentials') {
+                                    docker.withRegistry('https://861614002005.dkr.ecr.us-east-1.amazonaws.com', 'ecr-cred') {
                                         app.push("$SHORT_COMMIT")
                                         app.push("latest")
                                     }
@@ -62,8 +49,8 @@ pipeline {
                 stage('Remove local images') {
                             steps {
                                 echo '=== Delete the local docker images ==='
-                                sh("docker rmi -f rpidugu/simple-java-maven-app:latest || :")
-                                sh("docker rmi -f rpidugu/simple-java-maven-app:$SHORT_COMMIT || :")
+                                sh("docker rmi -f 861614002005.dkr.ecr.us-east-1.amazonaws.com/nginx":latest || :")
+                                sh("docker rmi -f 861614002005.dkr.ecr.us-east-1.amazonaws.com/nginx":$SHORT_COMMIT || :")
                 }
             }
     }
